@@ -172,6 +172,7 @@ class Query:
         for entry in self.entries:
             out += f"{entry.price}€ {entry.title} - {entry.location}\n"
             out += f"{entry.url}\n\n"
+        out = out[:-2]
         return out
 
 
@@ -244,15 +245,15 @@ class Database:
 
 
 def argparse_setup():
-    parser = argparse.ArgumentParser(prog='subito-it-scraper')
-    parser.add_argument('-n', '--name',
-                        help="Name of the query to add to the database")
-    parser.add_argument('-u', '--url',
-                        help="Url of the query to add to the database")
+    parser = argparse.ArgumentParser(prog='subito-it-scraper',
+                                     description="Item tracker for subito.it website. \
+                                     Run without flag will update current queries.")
+    parser.add_argument('-a', '--add', nargs=2, metavar=("NAME", "URL"),
+                        help="Name and url of the query to be added in the database.")
     parser.add_argument('--min-price', type=int, nargs='?', default=-1,
-                        help="Minimum price for the query to add to the database")
+                        help="Minimum price for a query to be added to the database")
     parser.add_argument('--max-price', type=int, nargs='?', default=sys.maxsize,
-                        help="Maximum price for the query to add to the database")
+                        help="Maximum price for a query to be added to the database")
     parser.add_argument('-l', '--list', action='store_true',
                         help="List all queries in the database")
     parser.add_argument('-r', '--remove', metavar="NAME",
@@ -266,7 +267,7 @@ def get_database_path():
     elif os.environ.get("HOME"):
         path = os.environ.get("HOME") + "/.config"
     else:
-        sys.exit("Can't find $XDG_CONFIG_HOME, is it set?")
+        sys.exit("Error: Can't find $XDG_CONFIG_HOME nor $HOME/.config")
     return path
 
 
@@ -285,8 +286,9 @@ if __name__ == "__main__":
     if args.list:
         for query in db.queries:
             print(query)
-    if args.name is not None and args.url is not None:
-        query = Query(args.name, args.url, args.min_price, args.max_price)
+    if args.add:
+        name, url = args.add
+        query = Query(name, url, args.min_price, args.max_price)
         db.add(query)
     else:
         db.update()
