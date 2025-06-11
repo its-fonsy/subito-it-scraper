@@ -12,30 +12,30 @@ DB_FILENAME = "subito-it-scraper.json"
 
 
 class Entry:
-    def __init__(self, _title, _price, _link, _location):
+    def __init__(self, _title, _price, _url, _location):
         self.title = _title
         self.price = _price
-        self.link = _link
+        self.url = _url
         self.location = _location
 
     def __str__(self):
         output = self.title + "\n"
         output += str(self.price) + "€ \n"
         output += str(self.location) + "\n"
-        output += str(self.link)
+        output += str(self.url)
         return output
 
     def export_to_dictionary(self):
         data = {
             "title": self.title,
             "price": self.price,
-            "link": self.link,
+            "url": self.url,
             "location": self.location
         }
         return data
 
     def __eq__(self, other):
-        return self.link == other.link
+        return self.url == other.url
 
     def __lt__(self, other):
         return self.price < other.price
@@ -77,11 +77,11 @@ class WebParser:
             # Parse item data
             title = self.parse_title(item)
             price = self.parse_price(item)
-            link = self.parse_link(item)
+            url = self.parse_url(item)
             location = self.parse_location(item)
 
             # Add item into the list
-            entry_list.append(Entry(title, price, link, location))
+            entry_list.append(Entry(title, price, url, location))
 
         return entry_list
 
@@ -96,7 +96,7 @@ class WebParser:
             price = None
         return price
 
-    def parse_link(self, item):
+    def parse_url(self, item):
         return item.find('a').get('href')
 
     def parse_sold(self, item):
@@ -164,6 +164,16 @@ class Query:
     def __eq__(self, other):
         return self.url == other.url
 
+    def __str__(self):
+        out = f"Query: {self.name}"
+        out += f"          Minimum price: {self.min_price}"
+        out += f"          Maximum price: {self.max_price}\n"
+        out += f"URL: {self.url}\n\n"
+        for entry in self.entries:
+            out += f"{entry.price}€ {entry.title} - {entry.location}\n"
+            out += f"{entry.url}\n\n"
+        return out
+
 
 class Database:
     def __init__(self, _db_filename):
@@ -193,7 +203,7 @@ class Database:
                 entry = Entry(
                     json_entry["title"],
                     json_entry["price"],
-                    json_entry["link"],
+                    json_entry["url"],
                     json_entry["location"]
                 )
                 entry_list.append(entry)
@@ -243,6 +253,8 @@ def argparse_setup():
                         help="Minimum price for the query to add to the database")
     parser.add_argument('--max-price', type=int, nargs='?', default=sys.maxsize,
                         help="Maximum price for the query to add to the database")
+    parser.add_argument('-l', '--list', action='store_true',
+                        help="List all queries in the database")
     parser.add_argument('-r', '--remove', metavar="NAME",
                         help="Remove a query from the database")
     return parser.parse_args()
@@ -270,6 +282,9 @@ if __name__ == "__main__":
 
     if args.remove:
         db.remove(args.remove)
+    if args.list:
+        for query in db.queries:
+            print(query)
     if args.name is not None and args.url is not None:
         query = Query(args.name, args.url, args.min_price, args.max_price)
         db.add(query)
