@@ -37,6 +37,9 @@ class Entry:
     def __eq__(self, other):
         return self.link == other.link
 
+    def __lt__(self, other):
+        return self.price < other.price
+
 
 class WebParser:
     def __init__(self, _url):
@@ -62,7 +65,7 @@ class WebParser:
         page = requests.get(self.url, headers=self.headers)
         soup = BeautifulSoup(page.text, 'html.parser')
         html_items_list = soup.find_all('div', class_=re.compile(r'item-card'))
-        entry_list = []
+        entry_list = list()
 
         for item in html_items_list:
 
@@ -115,17 +118,34 @@ class Query:
         self.url = _url
         self.min_price = _min_price
         self.max_price = _max_price
-        self.entry_list = []
+        self.entries = list()
 
     def is_price_in_range(self, price):
         return (price >= self.min_price) and (price <= self.max_price)
 
     def run(self):
         parser = WebParser(self.url)
+        new_entries = list()
+
+        # Fetch the new entries list
         for entry in parser.fetch_all_entries():
-            if self.is_price_in_range(entry.price) and entry not in self.entry_list:
-                self.entry_list.append(entry)
-                print("Adding ", entry.title, " ", entry.price)
+            if self.is_price_in_range(entry.price):
+                new_entries.append(entry)
+
+        # Add new entries to current list
+        for entry in new_entries:
+            if entry not in self.entries:
+                self.entries.append(entry)
+                print(f"Added entry -> {entry.price}€ {entry.title}")
+
+        # Removed sold items
+        for entry in self.entries:
+            if entry not in new_entries:
+                self.entries.remove(entry)
+                print(
+                    f"Removed entry \"{entry.price}€ {entry.title}\" because probably sold")
+
+        self.entries.sort()
 
     def to_dict(self):
         data = {
@@ -133,10 +153,10 @@ class Query:
             "url": self.url,
             "min_price": self.min_price,
             "max_price": self.max_price,
-            "entries": []
+            "entries": list()
         }
 
-        for entry in self.entry_list:
+        for entry in self.entries:
             data["entries"].append(entry.export_to_dictionary())
 
         return data
@@ -148,7 +168,7 @@ class Query:
 class Database:
     def __init__(self, _db_filename):
         self.db_filename = _db_filename
-        self.queries = []
+        self.queries = list()
 
     def read(self):
         try:
@@ -168,7 +188,7 @@ class Database:
                 json_query["max_price"]
             )
 
-            entry_list = []
+            entry_list = list()
             for json_entry in json_query["entries"]:
                 entry = Entry(
                     json_entry["title"],
@@ -177,7 +197,7 @@ class Database:
                     json_entry["location"]
                 )
                 entry_list.append(entry)
-            query.entry_list = entry_list
+            query.entries = entry_list
 
             self.queries.append(query)
 
@@ -205,7 +225,7 @@ class Database:
             print(f"Query \"{name}\" removed.")
 
     def save(self):
-        data = {"queries": []}
+        data = {"queries": list()}
         for query in self.queries:
             data["queries"].append(query.to_dict())
 
