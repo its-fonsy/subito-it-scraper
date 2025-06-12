@@ -1,15 +1,15 @@
 # Maintainer: Marco Fontana <ciabadiale@gmail.com>
 pkgname=subito-it-scraper
-pkgver=1
+pkgver=0.1
 pkgrel=1
-pkgdesc="Item tracker for subito.it website"
+pkgdesc='Item tracker for subito.it website'
 arch=('x86_64')
 license=('GPL3')
 depends=('python' 'python-requests' 'python-beautifulsoup4' 'python-regex')
-source=("file://subito-it-scraper.py")
+source=('file://subito-it-scraper.py')
 provides=("${pkgname}")
 conflicts=("${pkgname}")
-sha256sums=('e07a5711e5824c5e22b1f47d20b1b24b5b8ae19a736dd07597fb9fc34a85d088')
+sha256sums=('045170043dd74463a2d6a963c2e2c4632fba62a18469ece0a857cc60e62b173c')
 
 package() {
     cd "${srcdir}"

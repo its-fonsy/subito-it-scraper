@@ -9,14 +9,16 @@ import sys
 import os
 
 DB_FILENAME = "subito-it-scraper.json"
+VERSION = "0.1"
 
 
 class Entry:
-    def __init__(self, _title, _price, _url, _location):
+    def __init__(self, _title, _price, _url, _location, _show):
         self.title = _title
         self.price = _price
         self.url = _url
         self.location = _location
+        self.show = _show
 
     def __str__(self):
         output = self.title + "\n"
@@ -25,12 +27,13 @@ class Entry:
         output += str(self.url)
         return output
 
-    def export_to_dictionary(self):
+    def to_dict(self):
         data = {
             "title": self.title,
             "price": self.price,
             "url": self.url,
-            "location": self.location
+            "location": self.location,
+            "show": self.show
         }
         return data
 
@@ -81,7 +84,7 @@ class WebParser:
             location = self.parse_location(item)
 
             # Add item into the list
-            entry_list.append(Entry(title, price, url, location))
+            entry_list.append(Entry(title, price, url, location, True))
 
         return entry_list
 
@@ -157,7 +160,7 @@ class Query:
         }
 
         for entry in self.entries:
-            data["entries"].append(entry.export_to_dictionary())
+            data["entries"].append(entry.to_dict())
 
         return data
 
@@ -170,8 +173,9 @@ class Query:
         out += f"          Maximum price: {self.max_price}\n"
         out += f"URL: {self.url}\n\n"
         for entry in self.entries:
-            out += f"{entry.price}€ {entry.title} - {entry.location}\n"
-            out += f"{entry.url}\n\n"
+            if entry.show:
+                out += f"{entry.price}€ {entry.title} - {entry.location}\n"
+                out += f"{entry.url}\n\n"
         out = out[:-2]
         return out
 
@@ -205,7 +209,8 @@ class Database:
                     json_entry["title"],
                     json_entry["price"],
                     json_entry["url"],
-                    json_entry["location"]
+                    json_entry["location"],
+                    json_entry["show"]
                 )
                 entry_list.append(entry)
             query.entries = entry_list
@@ -258,6 +263,8 @@ def argparse_setup():
                         help="List all queries in the database")
     parser.add_argument('-r', '--remove', metavar="NAME",
                         help="Remove a query from the database")
+    parser.add_argument('-v', '--version', action='store_true',
+                        help="Print the version")
     return parser.parse_args()
 
 
@@ -281,12 +288,14 @@ if __name__ == "__main__":
     db = Database(db_path)
     db.read()
 
+    if args.version:
+        print(f"subito-it-scraper {VERSION}")
     if args.remove:
         db.remove(args.remove)
-    if args.list:
+    elif args.list:
         for query in db.queries:
             print(query)
-    if args.add:
+    elif args.add:
         name, url = args.add
         query = Query(name, url, args.min_price, args.max_price)
         db.add(query)
