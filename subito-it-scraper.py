@@ -9,7 +9,7 @@ import sys
 import os
 
 DB_FILENAME = "subito-it-scraper.json"
-VERSION = "0.1"
+VERSION = "0.2"
 
 
 class Entry:
@@ -132,8 +132,11 @@ class Query:
 
         # Fetch the new entries list
         for entry in parser.fetch_all_entries():
-            if self.is_price_in_range(entry.price):
-                new_entries.append(entry)
+            try:
+                if self.is_price_in_range(entry.price):
+                    new_entries.append(entry)
+            except TypeError:
+                continue
 
         # Add new entries to current list
         for entry in new_entries:
