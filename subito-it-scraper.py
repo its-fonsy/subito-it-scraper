@@ -9,7 +9,7 @@ import sys
 import os
 
 DB_FILENAME = "subito-it-scraper.json"
-VERSION = "0.2"
+VERSION = "0.3"
 
 
 class Entry:
@@ -131,6 +131,7 @@ class Query:
         new_entries = list()
 
         # Fetch the new entries list
+
         for entry in parser.fetch_all_entries():
             try:
                 if self.is_price_in_range(entry.price):
@@ -138,18 +139,23 @@ class Query:
             except TypeError:
                 continue
 
-        # Add new entries to current list
+        new_entries.sort()
+
+        # Add new entries to query list
+
+        print(f"Updating the \"{self.name}\" query")
         for entry in new_entries:
             if entry not in self.entries:
                 self.entries.append(entry)
-                print(f"Added entry -> {entry.price}€ {entry.title}")
+                print(f"    Added entry -> {entry.price}€ {entry.title}")
 
         # Removed sold items
+
         for entry in self.entries:
             if entry not in new_entries:
                 self.entries.remove(entry)
                 print(
-                    f"Removed entry \"{entry.price}€ {entry.title}\" because probably sold")
+                    f"    Removed entry \"{entry.price}€ {entry.title}\" because probably sold")
 
         self.entries.sort()
 
@@ -171,14 +177,11 @@ class Query:
         return self.url == other.url
 
     def __str__(self):
-        out = f"Query: {self.name}"
-        out += f"          Minimum price: {self.min_price}"
-        out += f"          Maximum price: {self.max_price}\n"
-        out += f"URL: {self.url}\n\n"
+        out = f"Query: {self.name}, [{self.min_price}, {self.max_price}]\n\n"
         for entry in self.entries:
             if entry.show:
-                out += f"{entry.price}€ {entry.title} - {entry.location}\n"
-                out += f"{entry.url}\n\n"
+                out += f"  {entry.price}€\t{entry.title} - {entry.location}\n"
+                out += f"  \t{entry.url}\n\n"
         out = out[:-2]
         return out
 
@@ -293,11 +296,11 @@ if __name__ == "__main__":
 
     if args.version:
         print(f"subito-it-scraper {VERSION}")
-    if args.remove:
+    elif args.remove:
         db.remove(args.remove)
     elif args.list:
         for query in db.queries:
-            print(query)
+            print(query, "\n")
     elif args.add:
         name, url = args.add
         query = Query(name, url, args.min_price, args.max_price)
