@@ -1,6 +1,6 @@
 # Subito.it scraper
 
-A simple python script that fetches data from subito.it offers and tracks item.
+A python script that scrape subito.it items and tracks them.
 
 Inspired from
 [subito-it-searcher](https://github.com/morrolinux/subito-it-searcher).
@@ -37,7 +37,7 @@ python ./subito-it-scraper.py -v
 Archlinux
 </summary>
 
-Archlinux users can use the `PKGBUILD` in the repository to install the
+Archlinux users can use the `PKGBUILD` in the current repository to install the
 required libraries and the script
 
 ```
@@ -48,8 +48,8 @@ makepkg -si
 </details>
 
 **Note**: a database named `subito-it-scraper.json` is saved inside
-`$XDG_CONFIG_HOME`, ensure that the environment variable is set and the
-folder exists.
+`$XDG_CONFIG_HOME` or `$HOME/.config`, ensure that at least on of the
+environment variable is set and the folder exists.
 
 ### Usage examples
 
@@ -62,7 +62,7 @@ subito-it-scraper -a "iPhone" "https://www.subito.it/annunci-italia/vendita/usat
 # Add a query with price range
 subito-it-scraper -a "iPhone" "https://www.subito.it/annunci-italia/vendita/usato/?q=iphone" --min-price 100 --max-price 500
 
-# List all the queries and them entries
+# List all the queries and their entries
 subito-it-tracker -l
 
 # Remove a query
@@ -71,7 +71,7 @@ subito-it-scraper -r "iPhone"
 # Show help
 subito-it-scraper -h
 ```
-Once a query is added to the database, it can be updated just by running
+Once a query is added to the database its entries can be updated just by running
 ```
 subito-it-tracker
 ```

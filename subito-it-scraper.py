@@ -9,16 +9,16 @@ import sys
 import os
 
 DB_FILENAME = "subito-it-scraper.json"
-VERSION = "0.3"
+VERSION = "0.4"
 
 
 class Entry:
-    def __init__(self, _title, _price, _url, _location, _show):
+    def __init__(self, _title, _price, _url, _location, _hide):
         self.title = _title
         self.price = _price
         self.url = _url
         self.location = _location
-        self.show = _show
+        self.hide = _hide
 
     def __str__(self):
         output = self.title + "\n"
@@ -33,7 +33,7 @@ class Entry:
             "price": self.price,
             "url": self.url,
             "location": self.location,
-            "show": self.show
+            "hide": self.hide
         }
         return data
 
@@ -84,7 +84,7 @@ class WebParser:
             location = self.parse_location(item)
 
             # Add item into the list
-            entry_list.append(Entry(title, price, url, location, True))
+            entry_list.append(Entry(title, price, url, location, False))
 
         return entry_list
 
@@ -141,21 +141,31 @@ class Query:
 
         new_entries.sort()
 
-        # Add new entries to query list
+        print(f"Updating \"{self.name}\" query")
 
-        print(f"Updating the \"{self.name}\" query")
-        for entry in new_entries:
-            if entry not in self.entries:
-                self.entries.append(entry)
-                print(f"    Added entry -> {entry.price}€ {entry.title}")
+        if self.entries == new_entries:
+            print("\tNo new entries")
+            return
 
-        # Removed sold items
+        # Remove sold entries
 
         for entry in self.entries:
             if entry not in new_entries:
-                self.entries.remove(entry)
                 print(
-                    f"    Removed entry \"{entry.price}€ {entry.title}\" because probably sold")
+                    f"\tRemoving entry \"{entry.price}€ {entry.title}\" because probably sold")
+                self.entries.remove(entry)
+
+        # Add new entries to query list
+
+        for entry in new_entries:
+            if entry not in self.entries:
+                print(
+                    f"  New entry: {entry.price}€ {entry.title} - {entry.location}")
+                ans = input("  Should be hidden when listing queries? (y/N) ")
+                if ans.lower() in ['y', 'yes']:
+                    entry.hide = True
+                print()
+                self.entries.append(entry)
 
         self.entries.sort()
 
@@ -179,7 +189,7 @@ class Query:
     def __str__(self):
         out = f"Query: {self.name}, [{self.min_price}, {self.max_price}]\n\n"
         for entry in self.entries:
-            if entry.show:
+            if not entry.hide:
                 out += f"  {entry.price}€\t{entry.title} - {entry.location}\n"
                 out += f"  \t{entry.url}\n\n"
         out = out[:-2]
@@ -216,7 +226,7 @@ class Database:
                     json_entry["price"],
                     json_entry["url"],
                     json_entry["location"],
-                    json_entry["show"]
+                    json_entry["hide"]
                 )
                 entry_list.append(entry)
             query.entries = entry_list
@@ -224,8 +234,11 @@ class Database:
             self.queries.append(query)
 
     def update(self):
+        last = self.queries[-1]
         for query in self.queries:
             query.run()
+            if query != last:
+                print()
 
     def add(self, query):
         if query not in self.queries:
